@@ -98,24 +98,20 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
     """
     def load_data(dataset_name):
         if dataset_name == 'alpaca':
-            # return load_dataset("tatsu-lab/alpaca")
-            return load_dataset("/cpfs01/user/chenmengzhao/peft_repo/alpaca")
+            return load_dataset("tatsu-lab/alpaca")
         elif dataset_name == 'oasst1':
-            # return load_dataset("timdettmers/openassistant-guanaco")
-            return load_dataset("/cpfs01/user/chenmengzhao/peft_repo/dataset/oasst1")
+            return load_dataset("timdettmers/openassistant-guanaco")
         elif dataset_name == 'deita-6k':
-            # dataset = load_dataset("hkust-nlp/deita-6k-v0", split = "train")
-            dataset = load_dataset("/cpfs01/user/chenmengzhao/peft_repo/data/deita-6k-v0", split = "train")
+            dataset = load_dataset("hkust-nlp/deita-6k-v0", split = "train")
             dataset = [row for row in dataset]
             return dataset
         elif dataset_name == 'deita-10k':
-            # dataset = load_dataset("hkust-nlp/deita-10k-v0", split = "train")
-            dataset = load_dataset("/cpfs01/user/chenmengzhao/peft_repo/data/deita-10k-v0", split = "train")
+            dataset = load_dataset("hkust-nlp/deita-10k-v0", split = "train")
             dataset = [row for row in dataset]
             return dataset
         elif dataset_name == 'c4':
             try:
-                # load from local file
+                # load from local file, a fast manner
                 dataset = load_dataset("arrow",
                 data_files={
                     "train": "/cpfs01/user/chenmengzhao/huggingface/datasets/allenai___json/allenai--c4-6fbe877195f42de5/0.0.0/0f7e3662623656454fcd2b650f34e886a7db4b9104504885bd462096cc7a9f51/json-train-00000-of-00002.arrow",
@@ -131,9 +127,11 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
                 )
             return dataset
         elif dataset_name == 'redpajama':
-            # dataset = load_dataset("togethercomputer/RedPajama-Data-1T-Sample",split='train')   
-            loacal_dataset = "/cpfs01/user/chenmengzhao/huggingface/datasets/togethercomputer___red_pajama-data-1_t-sample"
-            dataset = load_dataset(loacal_dataset)
+            try:
+                loacal_dataset = "/cpfs01/user/chenmengzhao/huggingface/datasets/togethercomputer___red_pajama-data-1_t-sample"
+                dataset = load_dataset(loacal_dataset)
+            except:
+                dataset = load_dataset("togethercomputer/RedPajama-Data-1T-Sample")   
             if "validation" not in dataset.keys():
                 validation_split = args.eval_dataset_size
                 dataset["validation"] = load_dataset(
