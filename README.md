@@ -1,5 +1,5 @@
 # EfficientQAT
-Official PyTorch implement of paper [EfficientQAT: Efficient Quantization-Aware Training for Large Language Models]()
+Official PyTorch implement of paper [EfficientQAT: Efficient Quantization-Aware Training for Large Language Models](https://arxiv.org/abs/2407.11062)
 
 ## News
 - Note: The end-to-end inference speedup through [BitBLAS](https://github.com/microsoft/BitBLAS) is working in progress. Current code can obtain actually reduction of training and inference memory footprint, but can not speedup inference.
@@ -44,12 +44,12 @@ Llama-2-7B|w4g128|5.53|64.27|3.7|[Link](https://huggingface.co/ChenMnZ/Llama-2-7
 Llama-2-7B|w3g128|5.81|64.02|3.1|[Link](https://huggingface.co/ChenMnZ/Llama-2-7b-EfficientQAT-w3g128)|
 Llama-2-7B|w2g64|6.86|60.14|2.3|[Link](https://huggingface.co/ChenMnZ/Llama-2-7b-EfficientQAT-w2g64)|
 Llama-2-7B|w2g128|7.17|59.50|2.2|[Link](https://huggingface.co/ChenMnZ/Llama-2-7b-EfficientQAT-w2g128)|
-Llama-2-13B|fp|4.88|67.81|25.4|-|
+Llama-2-13B|fp16|4.88|67.81|25.4|-|
 Llama-2-13B|w4g128|4.93|67.52|6.8|[Link](https://huggingface.co/ChenMnZ/Llama-2-13b-EfficientQAT-w4g128)|
 Llama-2-13B|w3g128|5.12|67.28|5.6|[Link](https://huggingface.co/ChenMnZ/Llama-2-13b-EfficientQAT-w3g128)|
 Llama-2-13B|w2g64|5.96|64.88|4.0|[Link](https://huggingface.co/ChenMnZ/Llama-2-13b-EfficientQAT-w2g64)|
 Llama-2-13B|w2g128|6.08|63.88|3.8|[Link](https://huggingface.co/ChenMnZ/Llama-2-13b-EfficientQAT-w2g128)|
-Llama-2-70B|fp|3.32|72.41|131.6|-|
+Llama-2-70B|fp16|3.32|72.41|131.6|-|
 Llama-2-70B|w4g128|3.39|72.62|35.8|[Link](https://huggingface.co/ChenMnZ/Llama-2-70b-EfficientQAT-w4g128)|
 Llama-2-70B|w3g128|3.61|71.76|29.1|[Link](https://huggingface.co/ChenMnZ/Llama-2-70b-EfficientQAT-w3g128)|
 Llama-2-70B|w2g64|4.52|69.48|20.1|[Link](https://huggingface.co/ChenMnZ/Llama-2-70b-EfficientQAT-w2g64)|
@@ -63,7 +63,7 @@ Llama-3-70B|fp16|2.85|75.33|137.8|-|
 Llama-3-70B|w4g128|3.17|74.57|38.9|[Link](https://huggingface.co/ChenMnZ/Llama-3-70b-EfficientQAT-w4g128)|
 Llama-3-70B|w3g128|4.19|72.42|32.2|[Link](https://huggingface.co/ChenMnZ/Llama-3-70b-EfficientQAT-w3g128)|
 Llama-3-70B|w2g64|6.08|67.89|23.2|[Link](https://huggingface.co/ChenMnZ/Llama-3-70b-EfficientQAT-w2g64)|
-Llama-3-70B|w2g128|runing||22.0|[Link](https://huggingface.co/ChenMnZ/Llama-3-70b-EfficientQAT-w2g128)|
+Llama-3-70B|w2g128|6.38|67.57|22.0|[Link](https://huggingface.co/ChenMnZ/Llama-3-70b-EfficientQAT-w2g128)|
 Llama-3-8B-Instruct|fp16|8.29|68.43|13.0|-|
 Llama-3-8B-Instruct|w4g128|7.37|68.69|5.4|[Link](https://huggingface.co/ChenMnZ/Llama-3-8b-instruct-EfficientQAT-w4g128)|
 Llama-3-8B-Instruct|w3g128|7.92|66.75|4.7|[Link](https://huggingface.co/ChenMnZ/Llama-3-8b-instruct-EfficientQAT-w3g128)|
@@ -137,9 +137,9 @@ CUDA_VISIBLE_DEVICES=0 python main_block_ap.py \
 If you found this work useful, please consider citing:
 ```
 @article{efficientqat,
-  title={EfficientQAT},
-  author={},
-  journal={},
+  title={EfficientQAT: Efficient Quantization-Aware Training for Large Language Models},
+  author={Chen, Mengzhao and Shao, Wenqi and Xu, Peng and Wang, Jiahao and Gao, Peng and Zhang, Kaipeng and Qiao, Yu and Luo, Ping},
+  journal={arXiv preprint arXiv:2407.11062},
   year={2023}
 }
 ```
