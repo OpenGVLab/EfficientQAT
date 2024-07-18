@@ -105,7 +105,7 @@ bash examples/e2e_qp/Llama-2-7b/w2g64-redpajama.sh
 ```
 bash examples/e2e_qp/Llama-2-7b/w2g128-redpajama.sh
 ```
-Specifically, the `--learning_rate` is `2e-5` for 2-bit and `1e-5` for 3-/4-bits in our experiments. You can decrease the `--per_device_train_batch_size` to reduce the memory footprint during trainin, and making sure that `--gradient_accumulation_steps`  increases by the same multiple to maintain the same batch size.
+Specifically, the `--learning_rate` is `2e-5` for 2-bit and `1e-5` for 3-/4-bits in our experiments. You can decrease the `--per_device_train_batch_size` to reduce the memory footprint during training, and making sure that `--gradient_accumulation_steps`  increases by the same multiple to maintain the same batch size.
 
 After E2E-QP, you can also leverage `trans_to_half_precision.py` to further reducing the model size through transfer some float32 data into half-precision ones:  
 ```
