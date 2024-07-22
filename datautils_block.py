@@ -191,13 +191,25 @@ def test_ppl(model, tokenizer, datasets=['wikitext2'],ppl_seqlen=2048):
         model.config.use_cache = False
         model.eval()
         nlls = []
+        if hasattr(model,'lm_head') and isinstance(model.lm_head, nn.Linear):
+            classifier = model.lm_head
+        elif hasattr(model.model,'lm_head'):
+            # for gptqmodels
+            classifier = None
+        elif hasattr(model,'output'):
+            # for internlm
+            classifier = model.output
+        else:
+            raise NotImplementedError
         for i in tqdm(range(nsamples)):
             batch = testenc[:, (i * seqlen) : ((i + 1) * seqlen)].to(model.device)
             outputs = model.model(batch)
-            hidden_states = outputs[0]
-            logits = model.lm_head(hidden_states.to(model.lm_head.weight.dtype))
+            if classifier is not None:
+                hidden_states = outputs[0]
+                logits = classifier(hidden_states.to(classifier.weight.dtype))
+            else:
+                logits = outputs[0]
             shift_logits = logits[:, :-1, :]
-            # import pdb;pdb.set_trace()
             shift_labels = testenc[:, (i * seqlen) : ((i + 1) * seqlen)][
                 :, 1:
             ].to(shift_logits.device)

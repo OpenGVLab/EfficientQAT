@@ -4,9 +4,9 @@ CUDA_VISIBLE_DEVICES=2 python main_e2e_qp.py \
     --wbits 2 \
     --group_size 64 \
     --learning_rate 2e-5 \
-    --dataset mix_deita_redpajama \
+    --dataset deita-10k \
     --dataset_format pt \
-    --output_dir ./output/e2e-qp-output/Llama-2-7b-w2g64-mix_deita_redpajama-8192 \
+    --output_dir ./output/e2e-qp-output/Llama-2-7b-w2g64-deita \
     --do_train True \
     --pt_context_len 4096 \
     --per_device_train_batch_size 4 \
