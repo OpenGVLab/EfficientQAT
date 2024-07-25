@@ -3,7 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import quantize.int_linear_fake as int_linear_fake
 import quantize.int_linear_real as int_linear_real
-
 from torch.optim.lr_scheduler import CosineAnnealingLR
 import copy
 import math
@@ -20,18 +19,15 @@ from torch.utils.data import DataLoader
 import shutil
 import os
 
-def update_dataloader(layer, dataloader, dev, attention_mask, position_ids):
+def update_dataloader(layer, dataset, dev, attention_mask, position_ids, offload=False):
     with torch.no_grad():
         with torch.cuda.amp.autocast():
-            for index1, inps in enumerate(dataloader):
-                inps = inps.to(dev)
-                inps = layer(inps, attention_mask=attention_mask,position_ids=position_ids)[0].to('cpu')
-                batch_size = len(inps)
-                for index2,inp in enumerate(inps):
-                    dataloader.dataset.update_data(index1*batch_size+index2,inp.clone())    # .clone() to avoid one saving bug of pytorch
-                    
+            for index1, inps in enumerate(dataset):
+                inps = inps.to(dev).unsqueeze(0)
+                new_data = layer(inps, attention_mask=attention_mask,position_ids=position_ids)[0].to('cpu')
+                dataset.update_data(index1,new_data)
 
-     
+                    
 def block_ap(
     model,
     args,
@@ -52,6 +48,9 @@ def block_ap(
     layers = model.model.layers
     model.model.embed_tokens = model.model.embed_tokens.to(dev)
     model.model.norm = model.model.norm.to(dev)
+    if hasattr(model.model, 'rotary_emb'):
+        # for llama-3.1
+        model.model.rotary_emb = model.model.rotary_emb.to(dev)
     is_llama = True     
     
     
@@ -74,7 +73,7 @@ def block_ap(
                                 model.config.hidden_size, dtype, cache_path=fp_val_cache_path,off_load_to_disk=args.off_load_to_disk)
     fp_train_inps_loader = DataLoader(fp_train_inps, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers,prefetch_factor=args.prefetch_factor)
     fp_val_inps_loader = DataLoader(fp_val_inps, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers,prefetch_factor=args.prefetch_factor)
-
+    
     # catch the first layer input
     cache = {"i": 0}
     class Catcher(nn.Module):
@@ -99,7 +98,7 @@ def block_ap(
     layers[0] = Catcher(layers[0])
     layers[0].is_llama = is_llama
 
-    
+
     with torch.no_grad():
         for batch in (trainloader+valloader):
             if cache["i"] >= args.train_size + args.val_size:
@@ -114,6 +113,9 @@ def block_ap(
     layers[0] = layers[0].cpu()
     model.model.embed_tokens = model.model.embed_tokens.cpu()
     model.model.norm = model.model.norm.cpu()
+    if hasattr(model.model, 'rotary_emb'):
+        # for llama-3.1
+        model.model.rotary_emb = model.model.rotary_emb.cpu()
     torch.cuda.empty_cache()
 
     if args.off_load_to_disk:
@@ -173,9 +175,9 @@ def block_ap(
         # deactivate quantization for obtaining ground truth
         set_quant_state(qlayer,weight_quant=False)
         if args.epochs > 0:
-            update_dataloader(qlayer,fp_train_inps_loader,dev,attention_mask,position_ids)
-            update_dataloader(qlayer,fp_val_inps_loader,dev,attention_mask,position_ids)
-        
+            update_dataloader(qlayer,fp_train_inps,dev,attention_mask,position_ids)
+            update_dataloader(qlayer,fp_val_inps,dev,attention_mask,position_ids)
+
         # activate quantization
         set_quant_state(qlayer,weight_quant=True)  
         
@@ -276,8 +278,8 @@ def block_ap(
         set_quant_state(qlayer,weight_quant=False)  # weight has been quantized inplace
         if args.epochs>0:
             # update inputs of quantization model
-            update_dataloader(qlayer,quant_train_inps_loader,dev,attention_mask,position_ids)
-            update_dataloader(qlayer,quant_val_inps_loader,dev,attention_mask,position_ids)
+            update_dataloader(qlayer,quant_train_inps,dev,attention_mask,position_ids)
+            update_dataloader(qlayer,quant_val_inps,dev,attention_mask,position_ids)
         
         # move to cpu
         layers[block_index] = qlayer.to("cpu")
