@@ -97,7 +97,7 @@ def main():
     parser.add_argument("--early_stop", type=int, default=0,help="early stoping after validation loss do not decrease")
     parser.add_argument("--off_load_to_disk", action="store_true", default=False, help="save training dataset to disk, saving CPU memory but may reduce training speed")
 
-
+    os.environ['TOKENIZERS_PARALLELISM'] = 'false'
     args = parser.parse_args()
     random.seed(args.seed)
     np.random.seed(args.seed)
