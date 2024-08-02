@@ -83,6 +83,7 @@ class QuantLinear(nn.Module, TritonModuleMixin):
         zeros = dequant_dim1(self.qzeros, self.bits, self.maxq, self.zeros_dim0, self.zeros_dim1)
         weight = ((weight.view(-1, self.group_size, dim1) - zeros.view(-1, 1, dim1)) * self.scales.view(-1, 1, dim1)).reshape(dim0, dim1)
         if transpose:
+            self.fake_transpose = True
             weight = weight.transpose(0,1).contiguous()
         self.register_buffer(
             'weight',
@@ -93,6 +94,7 @@ class QuantLinear(nn.Module, TritonModuleMixin):
             del self.qweight
             del self.scales
             del self.qzeros
+            del self.g_idx
         
     def pack(self, linear, scales, zeros, g_idx=None):
         W = linear.weight.data.clone()
@@ -155,6 +157,8 @@ class QuantLinear(nn.Module, TritonModuleMixin):
     def forward(self, x):
         if self.use_fake:
             weight = self.weight
+            if self.fake_transpose:
+                weight = weight.transpose(0,1)
         else:
             weight = dequant_dim0(self.qweight, self.bits, self.maxq, self.infeatures, self.outfeatures)
             dim0, dim1 = weight.shape
