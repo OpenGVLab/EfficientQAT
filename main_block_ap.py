@@ -120,7 +120,6 @@ def main():
         args.net = args.model.split('/')[-1]
         logger.info(f"net is None, setting as {args.net}")
     if args.resume_quant:
-        assert args.epochs > 0, "do not support continue training of quantized models"
         # directly load quantized model for evaluation
         model, tokenizer = load_quantized_model(args.resume_quant,args.wbits, args.group_size)
         logger.info(f"memory footprint after loading quantized model: {torch.cuda.max_memory_allocated('cuda') / 1024**3:.2f}GiB")
