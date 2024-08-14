@@ -2,12 +2,13 @@
 Official PyTorch implement of paper [EfficientQAT: Efficient Quantization-Aware Training for Large Language Models](https://arxiv.org/abs/2407.11062)
 
 ## News
-- [2024/08] We support for the quantization of [Mistral-Large-Instruct](https://huggingface.co/mistralai/Mistral-Large-Instruct-2407), a 123B model which outperforms Llama-3.1-405B.W2g64 Mistral-Large-Instruct with our EfficientQAT can compress the 123B models to 35 GB with only 4% points accuracy degeneration.
+- [2024/08] The new inference backend [T-MAC] (https://github.com/microsoft/T-MAC) from Microsoft have supported EffcientQAT models.
+- [2024/08] We support for the quantization of [Mistral-Large-Instruct](https://huggingface.co/mistralai/Mistral-Large-Instruct-2407). W2g64 Mistral-Large-Instruct with our EfficientQAT can compress the 123B models to 35 GB with only 4 points accuracy degeneration.
 - [2024/07] New featurs! We support to transfer EfficientQAT quantized models into `GPTQ v2` format and `BitBLAS` format, which can be directly loaded through [GPTQModel](https://github.com/ModelCloud/GPTQModel).
 - [2024/07] We release EfficientQAT, which pushes the limitation of uniform (INT) quantization in an efficient manner.
 
 ## Contents
-- [Install](#install)
+- [Installation](#installation)
 - [Model Zoo](#model-zoo)
 - [Training](#training)
 - [Inference](#Inference)
@@ -16,7 +17,7 @@ Official PyTorch implement of paper [EfficientQAT: Efficient Quantization-Aware 
 - [Citation](#citation)
 
 
-## Install
+## Installation
 1. Clone this repository and navigate to EfficientQAT folder
 ```
 git clone https://github.com/OpenGVLab/EfficientQAT.git
