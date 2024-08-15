@@ -78,8 +78,6 @@ def main():
     parser.add_argument("--training_seqlen", type=int, default=2048, help="lenth of the training sequence.")
     parser.add_argument("--batch_size", type=int, default=2, help="batch size.")
     parser.add_argument("--epochs", type=int, default=2)
-    parser.add_argument("--num_workers", type=int, default=2,help="multi porcess to load data")
-    parser.add_argument("--prefetch_factor", type=int, default=None,help="Number of batches loaded in advance by each worker")
     parser.add_argument("--ppl_seqlen", type=int, default=2048, help="input sequence length for evaluating perplexity")
     parser.add_argument("--seed", type=int, default=2, help="Seed for sampling the calibration data.")
     parser.add_argument("--eval_ppl", action="store_true",help="evaluate perplexity on wikitext2 and c4")

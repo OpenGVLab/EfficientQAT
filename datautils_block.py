@@ -223,29 +223,33 @@ def test_ppl(model, tokenizer, datasets=['wikitext2'],ppl_seqlen=2048):
 
 
         ppl = torch.exp(torch.stack(nlls).sum() / (nsamples * seqlen))
+        print(f'{dataset}:{ppl}')
         results[dataset] = ppl.item()
     model.config.use_cache = use_cache
     return results
 
 class BlockTrainDataset(Dataset):
-    def __init__(self, size, seqlen, hidden_size, dtype, cache_path='./cache/block_training_data', off_load_to_disk=False):
+# class BlockTrainDataset(object):
+    def __init__(self, size, seqlen, hidden_size, batch_size, dtype, cache_path='./cache/block_training_data', off_load_to_disk=False):
         self.size = size
         self.seqlen = seqlen
         self.hidden_size = hidden_size
         self.dtype = dtype
         self.cache_path = cache_path
         self.off_load_to_disk = off_load_to_disk
-        
+        self.batch_size = batch_size
+        assert size%batch_size == 0
+         
         if self.off_load_to_disk:
             if not os.path.exists(self.cache_path):
                 os.makedirs(self.cache_path)
                 self._initialize_data_on_disk()
         else:
-            self.data = torch.zeros((self.size, self.seqlen, self.hidden_size), dtype=self.dtype)
+            self.data = torch.zeros((self.size//self.batch_size, self.batch_size, self.seqlen, self.hidden_size), dtype=self.dtype)
 
     def _initialize_data_on_disk(self):
-        for idx in range(self.size):
-            tensor = torch.zeros((self.seqlen, self.hidden_size), dtype=self.dtype)
+        for idx in range(self.size//self.batch_size):
+            tensor = torch.zeros((self.batch_size, self.seqlen, self.hidden_size), dtype=self.dtype)
             filepath = self._get_file_path(idx)
             torch.save(tensor, filepath)
 
@@ -253,9 +257,11 @@ class BlockTrainDataset(Dataset):
         return os.path.join(self.cache_path, f"data_{idx}.pt")
 
     def __len__(self):
-        return self.size
+        return self.size//self.batch_size
 
     def __getitem__(self, idx):
+        if idx >= self.__len__():
+            raise IndexError("Index out of range")
         if self.off_load_to_disk:
             filepath = self._get_file_path(idx)
             tensor = torch.load(filepath)
@@ -268,4 +274,4 @@ class BlockTrainDataset(Dataset):
             filepath = self._get_file_path(idx)
             torch.save(new_data.to(self.dtype), filepath)
         else:
-            self.data[idx] = new_data.to(self.dtype)
+            self.data[idx] = new_data
