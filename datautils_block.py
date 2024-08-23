@@ -38,7 +38,7 @@ def get_wikitext2(tokenizer, train_size, val_size, seed, seqlen, test_only):
         inp = trainenc.input_ids[:, i:j]
         tar = inp.clone()
         tar[:, :-1] = -100
-        trainloader.append((inp, tar))
+        valloader.append((inp, tar))
     return trainloader, valloader
 
 
@@ -229,7 +229,6 @@ def test_ppl(model, tokenizer, datasets=['wikitext2'],ppl_seqlen=2048):
     return results
 
 class BlockTrainDataset(Dataset):
-# class BlockTrainDataset(object):
     def __init__(self, size, seqlen, hidden_size, batch_size, dtype, cache_path='./cache/block_training_data', off_load_to_disk=False):
         self.size = size
         self.seqlen = seqlen
