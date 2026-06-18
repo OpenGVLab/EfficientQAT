@@ -13,6 +13,7 @@ Official PyTorch implement of paper [EfficientQAT: Efficient Quantization-Aware 
 
 ## Contents
 - [Installation](#installation)
+- [Gemma-4 (Block-AP)](#gemma-4-block-ap)
 - [Model Zoo](#model-zoo)
 - [Training](#training)
 - [Inference](#Inference)
@@ -29,13 +30,39 @@ cd EfficientQAT
 ```
 
 2. Install package
+
+With [uv](https://docs.astral.sh/uv/) (recommended; resolves deps from `pyproject.toml`):
+```
+uv venv .venv
+source .venv/bin/activate
+uv pip install -e .
+```
+
+Or with conda + pip:
 ```
 conda create -n efficientqat python==3.11
-
 conda activate efficientqat
-
 pip install -r requirements.txt
 ```
+
+## Gemma-4 (Block-AP)
+
+Block-AP support for `google/gemma-4-E2B-it` (Gemma-3n / MatFormer lineage:
+per-layer embeddings, KV-sharing, alternating sliding/global attention, multimodal
+wrapper). Model-specific logic is isolated in `quantize/model_adapters.py`
+(`Gemma4Adapter`); `quantize/block_ap.py` stays model-agnostic, so adding another
+model is a new adapter rather than a fork.
+
+Result on an RTX 3080 (10GB), w4g128, C4 calib+eval: **fp16 109.09 → w4 109.59
+(+0.5% PPL)** — near-lossless 4-bit, ~6GB peak VRAM.
+
+```bash
+python run_gemma4_w4.py --device cuda --eval_device cuda \
+  --train_size 256 --epochs 2 --eval_seqs 40
+```
+
+See **[GEMMA4_QAT.md](GEMMA4_QAT.md)** for setup, the RTN ablation (`--epochs 0`),
+the low-memory block-walk GPU eval, and resource/scaling notes.
 
 ## Model Zoo
 

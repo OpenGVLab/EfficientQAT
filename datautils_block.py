@@ -12,8 +12,8 @@ import os
 
 def get_wikitext2(tokenizer, train_size, val_size, seed, seqlen, test_only):
     print("get_wikitext2")
-    traindata = load_dataset('wikitext', 'wikitext-2-raw-v1', split='train')
-    testdata = load_dataset('wikitext', 'wikitext-2-raw-v1', split='test')
+    traindata = load_dataset('Salesforce/wikitext', 'wikitext-2-raw-v1', split='train')
+    testdata = load_dataset('Salesforce/wikitext', 'wikitext-2-raw-v1', split='test')
 
     testenc = tokenizer("\n\n".join(testdata['text']), return_tensors='pt')
     if test_only:
@@ -43,76 +43,40 @@ def get_wikitext2(tokenizer, train_size, val_size, seed, seqlen, test_only):
 
 
 def get_c4(tokenizer, train_size, val_size, seed, seqlen, test_only):
-    print("get_c4")
-    try:
-        # set local path for faster loading
-        traindata = load_dataset("arrow",
-                    data_files={
-                        "train": "/cpfs01/user/chenmengzhao/huggingface/datasets/allenai___json/allenai--c4-6fbe877195f42de5/0.0.0/0f7e3662623656454fcd2b650f34e886a7db4b9104504885bd462096cc7a9f51/json-train-00000-of-00002.arrow",
-                        "validation": "/cpfs01/user/chenmengzhao/huggingface/datasets/allenai___json/allenai--c4-efc3d4f4606f44bd/0.0.0/fe5dd6ea2639a6df622901539cb550cf8797e5a6b2dd7af1cf934bed8e233e6e/json-validation.arrow",
-                    },split='train'
-                    )
-        valdata = load_dataset("arrow",
-                    data_files={
-                        "validation": "/cpfs01/user/chenmengzhao/huggingface/datasets/allenai___json/allenai--c4-efc3d4f4606f44bd/0.0.0/fe5dd6ea2639a6df622901539cb550cf8797e5a6b2dd7af1cf934bed8e233e6e/json-validation.arrow",
-                    },split='validation'
-                    )
-    except:
-        traindata = load_dataset(
-            'allenai/c4', 'allenai--c4', data_files={'train': 'en/c4-train.00000-of-01024.json.gz'}, split='train'
-        )
-        valdata = load_dataset(
-            'allenai/c4', 'allenai--c4', data_files={'validation': 'en/c4-validation.00000-of-00008.json.gz'}, split='validation'
-        )
+    # Streaming: the new datasets lib can't load c4 by single-name id, and full-shard
+    # download blows RAM/disk. Stream and stop as soon as we have enough windows.
+    # Deterministic (first-seqlen crop of each long-enough doc) — no random indexing,
+    # which streams don't support anyway.
+    print("get_c4 (streaming)")
 
-    random.seed(0)
-    valenc = []
-    for _ in range(256):
-        while True:
-            i = random.randint(0, len(valdata) - 1)
-            tmp = tokenizer(valdata[i]['text'], return_tensors='pt')
-            if tmp.input_ids.shape[1] >= seqlen:
-                break
-        i = random.randint(0, tmp.input_ids.shape[1] - seqlen - 1)
-        j = i + seqlen
-        valenc.append(tmp.input_ids[:, i:j])
-    valenc = torch.hstack(valenc)
+    def shard(split, fn):
+        return load_dataset('allenai/c4', 'en', data_files={split: fn},
+                            split=split, streaming=True)
+
+    def windows(stream, n):
+        out = []
+        for ex in stream:
+            enc = tokenizer(ex['text'], return_tensors='pt').input_ids
+            if enc.shape[1] >= seqlen + 1:
+                out.append(enc[:, :seqlen])
+                if len(out) == n:
+                    break
+        return out
+
+    valenc = torch.hstack(windows(shard('validation', 'en/c4-validation.00000-of-00008.json.gz'), 256))
     if test_only:
-        return valenc 
+        return valenc
 
-    random.seed(seed)
-    trainloader = []
-    val_sample_ratio = 0.9  # sample train from [0:0.9] and val from [0.9:1.0] to avoid overlap
-    for _ in range(train_size):
-        while True:
-            i = random.randint(0, int(len(traindata)*val_sample_ratio) - 1)
-            trainenc = tokenizer(traindata[i]['text'], return_tensors='pt')
-            if trainenc.input_ids.shape[1] >= seqlen+1:
-                break
-        i = random.randint(0, trainenc.input_ids.shape[1] - seqlen - 1)
-        j = i + seqlen
-        inp = trainenc.input_ids[:, i:j]
-        tar = inp.clone()
-        tar[:, :-1] = -100
-        trainloader.append((inp, tar))
-    
-    valloader = []
-    for _ in range(val_size):
-        while True:
-            i = random.randint(int(len(traindata)*val_sample_ratio),len(traindata)-1)
-            trainenc = tokenizer(traindata[i]['text'], return_tensors='pt')
-            if trainenc.input_ids.shape[1] >= seqlen+1:
-                break
-        i = random.randint(0, trainenc.input_ids.shape[1] - seqlen - 1)
-        j = i + seqlen
-        inp = trainenc.input_ids[:, i:j]
-        tar = inp.clone()
-        tar[:, :-1] = -100
-        valloader.append((inp, tar))
+    def to_loader(wins):
+        loader = []
+        for inp in wins:
+            tar = inp.clone()
+            tar[:, :-1] = -100
+            loader.append((inp, tar))
+        return loader
 
-
-
-    return trainloader, valloader 
+    train_wins = windows(shard('train', 'en/c4-train.00000-of-01024.json.gz'), train_size + val_size)
+    return to_loader(train_wins[:train_size]), to_loader(train_wins[train_size:])
 
 def get_redpajama(tokenizer, train_size, val_size, seed, seqlen):
     print("get_redpajama")

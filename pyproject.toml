@@ -1,0 +1,18 @@
+[project]
+name = "efficientqat"
+version = "0.1.0"
+requires-python = ">=3.10"
+# ponytail: unpinned transformers — gemma-4 needs latest, old 4.40.1 can't load it.
+dependencies = [
+    "torch",
+    "transformers",
+    "accelerate",
+    "datasets",
+    "lm_eval",
+    "sentencepiece",
+    "protobuf",
+    "numpy",
+    "tqdm",
+    "termcolor",
+    "huggingface_hub[hf_transfer]",
+]
